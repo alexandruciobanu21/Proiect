@@ -69,9 +69,9 @@ def app(config, img):
     return result
 
 
-if __name__ == "__main__":
-    config = config_kernel()
-    img = load_image("/content/Proiect/lenna.jpg")
-    save_image("/content/Proiect/lenna_read.jpg", img)
-    result = app(config, img)
-    save_image("/content/Proiect/lenna_result.jpg", result)
+
+config = config_kernel()
+img = load_image("/content/Proiect/lenna.jpg")
+save_image("/content/Proiect/lenna_read.jpg", img)
+result = app(config, img)
+save_image("/content/Proiect/lenna_result.jpg", result)
