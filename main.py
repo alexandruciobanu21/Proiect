@@ -1,7 +1,6 @@
 from config import KernelConfig
 import pyopencl as cl
 import numpy as np
-from image_processing import ImageProcessing
 import cv2
 from imageio import imread, imsave
 
@@ -28,7 +27,7 @@ def config_kernel():
 
     local_work_group = None
 
-    prg = cl.Program(ctx, open("/content/PPAMproject/gauss.cl").read())
+    prg = cl.Program(ctx, open("/content/Proiect/gauss.cl").read())
     prg = prg.build()
     
     config = KernelConfig(ctx, queue, mf, local_work_group, prg)
@@ -72,7 +71,7 @@ def app(config, img):
 
 if __name__ == "__main__":
     config = config_kernel()
-    img = load_image("/content/PPAMproject/data/input/lenna.jpg")
-    ImageProcessing.save_image("/content/PPAMproject/data/input/lenna_read.jpg", img)
+    img = load_image("/content/Proiect/lenna.jpg")
+    save_image("/content/Proiect/lenna_read.jpg", img)
     result = app(config, img)
-    save_image("/content/PPAMproject/data/input/lenna_result.jpg", result)
+    save_image("/content/Proiect/lenna_result.jpg", result)
