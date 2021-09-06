@@ -34,37 +34,19 @@ def config_kernel():
 
     return config
 
-def app(config, img):
-    img_buffer = cl.Buffer(
-        config.ctx, config.mf.READ_ONLY | config.mf.COPY_HOST_PTR, hostbuf=img
-    )
-    result_buffer = cl.Buffer(config.ctx, config.mf.WRITE_ONLY, img.nbytes)
+def run(config, img):
+  
+    imgInBuf = cl.Buffer(config.ctx, config.mf.READ_ONLY | config.mf.COPY_HOST_PTR, hostbuf=img)
+    imgOutBuf = cl.Buffer(config.ctx, config.mf.WRITE_ONLY, img.nbytes)
+    imgWidthBuf = cl.Buffer( config.ctx, config.mf.READ_ONLY | config.mf.COPY_HOST_PTR, hostbuf=np.int32(img.shape[1]))
+    imgHeightBuf = cl.Buffer( config.ctx, config.mf.READ_ONLY | config.mf.COPY_HOST_PTR, hostbuf=np.int32(img.shape[0]))
 
-    width_buffer = cl.Buffer(
-        config.ctx,
-        config.mf.READ_ONLY | config.mf.COPY_HOST_PTR,
-        hostbuf=np.int32(img.shape[1]),
-    )
-    height_buffer = cl.Buffer(
-        config.ctx,
-        config.mf.READ_ONLY | config.mf.COPY_HOST_PTR,
-        hostbuf=np.int32(img.shape[0]),
-    )
-
-    event1 = config.prg.Gauss(
-        config.queue,
-        img.shape,
-        config.local_work_group,
-        img_buffer,
-        result_buffer,
-        width_buffer,
-        height_buffer,
-    )
+    config.prg.Gauss( config.queue, img.shape, config.local_work_group, imgInBuf, imgOutBuf, imgWidthBuf, imgHeightBuf)
     config.queue.finish()
 
     # copies resulting image
     result = np.empty_like(img)
-    cl.enqueue_copy(config.queue, result, result_buffer)
+    cl.enqueue_copy(config.queue, result, imgOutBuf)
 
     return result
 
@@ -73,5 +55,5 @@ def app(config, img):
 config = config_kernel()
 img = load_image("/content/Proiect/image.jpg")
 save_image("/content/Proiect/image_read.jpg", img)
-result = app(config, img)
+result = run(config, img)
 save_image("/content/Proiect/image_result.jpg", result)
