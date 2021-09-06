@@ -6,7 +6,7 @@ from imageio import imread, imsave
 
 def load_image(path):
         if len(imread(path).shape) == 3:
-            image = cv2.cvtColor(imread(path), cv2.COLOR_BGR2HSV)
+            image = cv2.cvtColor(imread(path), cv2.COLOR_BGR2GRAY)
             return image.astype(np.float32)
         else:
             return imread(path).astype(np.float32)
@@ -71,7 +71,7 @@ def app(config, img):
 
 
 config = config_kernel()
-img = load_image("/content/Proiect/lenna.jpg")
-save_image("/content/Proiect/lenna_read.jpg", img)
+img = load_image("/content/Proiect/image.jpg")
+save_image("/content/Proiect/image_read.jpg", img)
 result = app(config, img)
-save_image("/content/Proiect/lenna_result.jpg", result)
+save_image("/content/Proiect/image_result.jpg", result)
