@@ -1,9 +1,11 @@
-from config import KernelConfig
+from config import Kernel
 import pyopencl as cl
 import numpy as np
 import cv2
 from imageio import imread, imsave
 
+
+#incarcare imagine
 def load_image(path):
         if len(imread(path).shape) == 3:
             image = cv2.cvtColor(imread(path), cv2.COLOR_BGR2GRAY)
@@ -11,49 +13,44 @@ def load_image(path):
         else:
             return imread(path).astype(np.float32)
 
-
+#salvare imagine
 def save_image(path, image):
       return imsave(path, image.astype(np.float32))
 
 
-def config_kernel():
-    ctx = cl.create_some_context()
+def kernel_create():
+    #configurare kernel
+    context = cl.create_some_context()
+    queue_prop = cl.command_queue_properties
+    queue = cl.CommandQueue(context, properties=queue_prop.PROFILING_ENABLE)
+    memF = cl.mem_flags
+    work_group = None
 
-    cpq = cl.command_queue_properties
+    program = cl.Program(context, open("/content/Proiect/gauss.cl").read())
+    program = program.build()
+    kernel = Kernel(context, queue, memF, work_group, program)
 
-    queue = cl.CommandQueue(ctx, properties=cpq.PROFILING_ENABLE)
+    return kernel
 
-    mf = cl.mem_flags
+def gauss_blur(kernel, imgIn):
+  #definirea bufferelor
+    imgInBuf = cl.Buffer(kernel.context, kernel.memF.READ_ONLY | kernel.memF.COPY_HOST_PTR, hostbuf=imgIn)
+    imgOutBuf = cl.Buffer(kernel.context, kernel.memF.WRITE_ONLY, imgIn.nbytes)
+    imgWidthBuf = cl.Buffer( kernel.context, kernel.memF.READ_ONLY | kernel.memF.COPY_HOST_PTR, hostbuf=np.int32(imgIn.shape[1]))
+    imgHeightBuf = cl.Buffer( kernel.context, kernel.memF.READ_ONLY | kernel.memF.COPY_HOST_PTR, hostbuf=np.int32(imgIn.shape[0]))
 
-    local_work_group = None
+    kernel.program.Gauss( kernel.queue, imgIn.shape, kernel.work_group, imgInBuf, imgOutBuf, imgWidthBuf, imgHeightBuf)
+    kernel.queue.finish()
+  #copiere din buffer ul de out in imaginea de out
+    imgOut = np.empty_like(imgIn)
+    cl.enqueue_copy(kernel.queue, imgOut, imgOutBuf)
 
-    prg = cl.Program(ctx, open("/content/Proiect/gauss.cl").read())
-    prg = prg.build()
-    
-    config = KernelConfig(ctx, queue, mf, local_work_group, prg)
-
-    return config
-
-def run(config, img):
-  
-    imgInBuf = cl.Buffer(config.ctx, config.mf.READ_ONLY | config.mf.COPY_HOST_PTR, hostbuf=img)
-    imgOutBuf = cl.Buffer(config.ctx, config.mf.WRITE_ONLY, img.nbytes)
-    imgWidthBuf = cl.Buffer( config.ctx, config.mf.READ_ONLY | config.mf.COPY_HOST_PTR, hostbuf=np.int32(img.shape[1]))
-    imgHeightBuf = cl.Buffer( config.ctx, config.mf.READ_ONLY | config.mf.COPY_HOST_PTR, hostbuf=np.int32(img.shape[0]))
-
-    config.prg.Gauss( config.queue, img.shape, config.local_work_group, imgInBuf, imgOutBuf, imgWidthBuf, imgHeightBuf)
-    config.queue.finish()
-
-    # copies resulting image
-    result = np.empty_like(img)
-    cl.enqueue_copy(config.queue, result, imgOutBuf)
-
-    return result
+    return imgOut
 
 
-
-config = config_kernel()
-img = load_image("/content/Proiect/image.jpg")
-save_image("/content/Proiect/image_read.jpg", img)
-result = run(config, img)
-save_image("/content/Proiect/image_result.jpg", result)
+#apelarea functiilor
+kernel = kernel_create()
+imgIn = load_image("/content/Proiect/image.jpg")
+save_image("/content/Proiect/image_read.jpg", imgIn)
+imgOut = gauss_blur(kernel, imgIn)
+save_image("/content/Proiect/image_result.jpg", imgOut)
