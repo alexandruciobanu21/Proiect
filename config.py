@@ -1,7 +1,7 @@
-class KernelConfig:
-    def __init__(self, ctx, queue, mf, local_work_group, prg):
-        self.ctx = ctx
+class Kernel:
+    def __init__(self, context, queue, memF, work_group, program):
+        self.context = context
         self.queue = queue
-        self.mf = mf
-        self.local_work_group = local_work_group
-        self.prg = prg
+        self.memF = memF
+        self.work_group = work_group
+        self.program = program
