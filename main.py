@@ -1,4 +1,4 @@
-from config import Kernel
+from config_kernel import Kernel
 import pyopencl as cl
 import numpy as np
 import cv2
